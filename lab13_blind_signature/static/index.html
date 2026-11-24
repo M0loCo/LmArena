@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЛР №13 — Слепая подпись · Анонимное голосование</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">🗳</div>
+    <div>
+      <h1>Слепая подпись · Анонимное голосование</h1>
+      <p>Лабораторная работа №13 · Схема Чаума на базе RSA-1024 · один бюллетень = один выбор: {Да, Нет, Воздержался}</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button id="btn-verify-all" class="btn ghost">✔ Проверить все подписи в урне</button>
+    <button id="btn-reset" class="btn danger">↺ Сбросить выборы</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ КЛИЕНТ ============ -->
+  <section class="col client">
+    <div class="col-head">
+      <span class="role client-role">ИЗБИРАТЕЛЬ</span>
+      <h2>Клиентская часть</h2>
+    </div>
+
+    <div class="panel">
+      <div class="row between">
+        <label class="fld">Избиратель
+          <select id="voter-select"></select>
+        </label>
+        <form id="add-voter-form" class="inline-form">
+          <input type="text" id="add-voter-name" maxlength="32" placeholder="Новый избиратель…">
+          <button type="submit" class="btn ghost small">＋ Добавить</button>
+        </form>
+      </div>
+
+      <div class="choice-label">Ваш выбор (виден только вам до урны)</div>
+      <div id="choice-group" class="choice-group">
+        <button class="choice selected" data-choice="Да">ДА</button>
+        <button class="choice" data-choice="Нет">НЕТ</button>
+        <button class="choice" data-choice="Воздержался">ВОЗДЕРЖАЛСЯ</button>
+      </div>
+
+      <ol class="steps">
+        <li><button id="step1" class="btn primary step-btn"><span class="step-num">1</span>Сформировать бюллетень<small>M = «BLIND-BALLOT-v1|id=…|choice=…», H = SHA-256(M)</small></button></li>
+        <li><button id="step2" class="btn primary step-btn"><span class="step-num">2</span>Ослепить бюллетень<small>r ← случайный, взаимно простой с n; m′ = H·r<sup>e</sup> mod n</small></button></li>
+        <li><button id="step3" class="btn primary step-btn"><span class="step-num">3</span>Получить подпись сервера<small>отправить ТОЛЬКО m′ → сервер вернёт s′ = m′<sup>d</sup> mod n</small></button></li>
+        <li><button id="step4" class="btn primary step-btn"><span class="step-num">4</span>Снять ослепление и проверить<small>s = s′·r<sup>−1</sup> mod n; проверка s<sup>e</sup> mod n = H</small></button></li>
+        <li><button id="step5" class="btn gold step-btn"><span class="step-num">5</span>Отправить бюллетень в урну<small>анонимный канал: сервер получает (M, s), но не знает, от кого</small></button></li>
+      </ol>
+
+      <div id="client-error" class="error hidden"></div>
+
+      <div class="numbers" id="client-numbers">
+        <div class="numbers-title">Числа на стороне клиента</div>
+        <div class="num-row"><span class="num-k">бюллетень (JSON)</span><pre id="cn-ballot">—</pre></div>
+        <div class="num-row"><span class="num-k">сообщение M</span><pre id="cn-message">—</pre></div>
+        <div class="num-row"><span class="num-k">H = SHA-256(M)</span><pre id="cn-h">—</pre></div>
+        <div class="num-row secret"><span class="num-k">r — ослепляющий множитель <em>(секрет!)</em></span><pre id="cn-r">—</pre></div>
+        <div class="num-row"><span class="num-k">m′ = H·r^e mod n — ослеплённое</span><pre id="cn-blinded">—</pre></div>
+        <div class="num-row"><span class="num-k">s′ — подпись под m′ от сервера</span><pre id="cn-bsig">—</pre></div>
+        <div class="num-row ok"><span class="num-k">s = s′·r⁻¹ mod n — итоговая подпись</span><pre id="cn-sig">—</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ СЕРВЕР ============ -->
+  <section class="col server">
+    <div class="col-head">
+      <span class="role server-role">ИЗБИРАТЕЛЬНАЯ КОМИССИЯ</span>
+      <h2>Серверная часть</h2>
+      <div class="server-tools">
+        <select id="key-bits"><option value="512">RSA-512</option><option value="768">RSA-768</option><option value="1024" selected>RSA-1024</option><option value="2048">RSA-2048</option></select>
+        <button id="btn-keys" class="btn ghost small">⟳ Перегенерировать ключи</button>
+        <label class="secret-toggle"><input type="checkbox" id="toggle-server-secrets"> показать d</label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="numbers">
+        <div class="numbers-title">Ключи сервера <span id="key-bits-badge" class="badge"></span></div>
+        <div class="num-row"><span class="num-k">n (модуль RSA)</span><pre id="sn-n">—</pre></div>
+        <div class="num-row"><span class="num-k">e (открытая экспонента)</span><pre id="sn-e">—</pre></div>
+        <div class="num-row secret hidden" id="sn-d-row"><span class="num-k">d (секретная экспонента) <em>(секрет!)</em></span><pre id="sn-d">—</pre></div>
+      </div>
+
+      <div class="block-title">Реестр избирателей <span class="muted">(кто получал подпись — видно; что он выбрал — нет)</span></div>
+      <ul id="voter-list" class="voter-list"></ul>
+
+      <div class="block-title">Журнал выдачи подписей <span class="muted">(сервер знает только m′ и s′)</span></div>
+      <div id="issuance-log" class="log-box"><div class="empty">Подписей ещё не выдано</div></div>
+
+      <div id="server-error" class="error hidden"></div>
+
+      <div class="block-title">🗳 Урна <span class="muted">(бюллетени + подписи; избиратель неизвестен)</span></div>
+      <div id="ballot-box" class="log-box"><div class="empty">Урна пуста</div></div>
+
+      <div class="block-title">Отклонённые бюллетени</div>
+      <div id="rejected-box" class="log-box"><div class="empty">Нет отклонённых</div></div>
+    </div>
+  </section>
+
+  <!-- ============ ИТОГИ ============ -->
+  <section class="col results">
+    <div class="col-head"><span class="role tally-role">ИТОГИ</span><h2>Результаты голосования</h2></div>
+    <div class="panel">
+      <div class="tally" id="tally"></div>
+      <div class="tally-meta" id="tally-meta"></div>
+      <div class="unlink-note">
+        <b>Почему сервер не может подделать или связать голоса?</b><br>
+        Подпись выдаётся только под <i>ослеплённым</i> значением m′ = H·r<sup>e</sup> mod n, где r знает лишь
+        избиратель. Значения (m′, s′) из журнала выдачи и (M, s) из урны не связывает ни одно
+        публичное число: s = s′·r<sup>−1</sup> mod n «переносит» подпись на исходное сообщение.
+        Проверка любого бюллетеня (s<sup>e</sup> mod n = SHA-256(M)) — публична, но принадлежность
+        бюллетеня конкретному избирателю — нет. Повторное голосование исключено реестром выдач;
+        дубликат бюллетеня отсеивается по id при вбросе.
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
