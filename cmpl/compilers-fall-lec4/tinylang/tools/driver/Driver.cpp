@@ -163,13 +163,13 @@ int main(int Argc, const char **Argv) {
     auto Triple = llvm::Triple(LLVM_DEFAULT_TARGET_TRIPLE);
     std::string ErrMsg;
     if (auto Target = llvm::TargetRegistry::lookupTarget(
-            Triple.getTriple(), ErrMsg)) {
+            Triple, ErrMsg)) {
       llvm::errs() << "Targeting " << Target->getName()
                    << ". ";
       // This prints the available CPUs and features of the
       // target to stderr...
       Target->createMCSubtargetInfo(
-          Triple.getTriple(), codegen::getCPUStr(),
+          Triple, codegen::getCPUStr(),
           codegen::getFeaturesStr());
     } else {
       llvm::errs() << ErrMsg << "\n";

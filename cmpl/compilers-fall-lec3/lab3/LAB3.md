@@ -113,33 +113,53 @@ clang -O1 -S -emit-llvm gcd.c -o gcd-clang-O1.ll
   остались phi в заголовке — т.е. ручной `gcd.ll` структурно совпадает
   с выводом clang -O1 (с точностью до имён и атрибутов функций).
 
-## 6. Запуск (выполняет пользователь — требуется LLVM из лабы 1)
+## 6. Запуск и проверка — ВЫПОЛНЕНО на машине пользователя
+
+(Ubuntu, LLVM/clang 24.0.0git из лабы 1, `~/opt/clang`, каталог `~/cmpl/lab3`).
 
 ```bash
 cd ~/cmpl/lab3
-export PATH=$HOME/opt/clang/bin:$PATH   # ваш собранный из лабы 1 LLVM 17
+export PATH=$HOME/opt/clang/bin:$PATH
+which clang lli
 lli gcd.ll
-# или
 clang gcd.ll -o gcd && ./gcd
 clang gcd.c -o gcd_c && ./gcd_c
+clang -O0 -S -emit-llvm gcd.c -o gcd-clang-O0.ll
+clang -O1 -S -emit-llvm gcd.c -o gcd-clang-O1.ll
+grep -nE 'alloca|phi' gcd-clang-O1.ll
 ```
 
-Ожидаемый вывод (эталон на C, собранный системным gcc, печатает
-`gcd(12, 15) = 3`; сам `gcd.ll` статически проверен на согласованность
-меток, phi и предшественников):
+Реальный вывод (`lli`):
 
 ```
 gcd(12, 15) = 3
 ```
 
-Сравнить структуры `gcd.ll` и `gcd-clang-O1.ll` (после mem2reg):
-совпадают блоки `cond`/`body`/`exit`, phi `%a.phi`/`%b.phi`, `icmp eq`,
-`srem`, `br i1`.
+То же самое из собранного ELF (`./gcd`, `./gcd_c`) — тоже `gcd(12, 15) = 3`.
+
+Реальный `grep -nE 'alloca|phi' gcd-clang-O1.ll` (alloca отсутствуют — SSA
+после `mem2reg`; вместо имён — пронумерованные регистры):
+
+```
+14:  %5 = phi i32 [ %6, %4 ], [ %0, %2 ]
+15:  %6 = phi i32 [ %7, %4 ], [ %1, %2 ]
+21:  %10 = phi i32 [ %0, %2 ], [ %6, %4 ]
+30:  %2 = phi i32 [ %3, %1 ], [ 12, %0 ]
+31:  %3 = phi i32 [ %4, %1 ], [ 15, %0 ]
+```
+
+Структура `gcd-clang-O1.ll` совпадает с ручным `gcd.ll`: phi в заголовке
+цикла, `icmp eq i32 …, 0`, `srem i32`, `br i1`, три базовых блока цикла.
+Отличия только в именовании (`%0`, `%5`… вместо `%a.phi`/`%b.phi`) и в том,
+что clang склеил `main` и вызывает тот же код.
 
 ## 7. Итог и связь с остальными лабами
 
 * Типы строго типизированы: `i32` аргументы, `i1` условия, `srem i32`.
 * Цикл = базовые блоки + phi; присваивания в IR нет (SSA).
 * Именно такую схему (`entry` → `while.cond` → `while.body` → `after.while`,
-  phi в заголовке) реализует кодогенератор TinyLang — см. лабораторную 4,
-  где phi порождаются на лету алгоритмом «seal blocks» (Braun et al., 2013).
+  phi в заголовке) реализует кодогенератор TinyLang — см. лабораторную 4.
+
+Проверено на машине пользователя: `lli gcd.ll`, `clang gcd.ll -o gcd`,
+`clang gcd.c -o gcd_c` — во всех случаях печатается `gcd(12, 15) = 3`;
+сравнение с IR от `clang -O0/-O1` — в §5–§6 выше.

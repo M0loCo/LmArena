@@ -40,6 +40,7 @@ llvm::GlobalObject *CGModule::getGlobal(Decl *D) {
 }
 
 void CGModule::run(ModuleDeclaration *Mod) {
+  this->Mod = Mod;
   for (auto *Decl : Mod->getDecls()) {
     if (auto *Var =
             llvm::dyn_cast<VariableDeclaration>(Decl)) {

@@ -1,4 +1,5 @@
 #include "tinylang/CodeGen/CGProcedure.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/Casting.h"
@@ -53,13 +54,22 @@ llvm::Value *CGProcedure::readLocalVariableRecursive(
   return Val;
 }
 
+
 llvm::PHINode *
 CGProcedure::addEmptyPhi(llvm::BasicBlock *BB, Decl *Decl) {
+#if LLVM_VERSION_MAJOR >= 18
+  return BB->empty()
+             ? llvm::PHINode::Create(mapType(Decl), 0, "",
+                                     llvm::InsertPosition(BB))
+             : llvm::PHINode::Create(mapType(Decl), 0, "",
+                                     llvm::InsertPosition(BB->begin()));
+#else
   return BB->empty()
              ? llvm::PHINode::Create(mapType(Decl), 0, "",
                                      BB)
              : llvm::PHINode::Create(mapType(Decl), 0, "",
                                      &BB->front());
+#endif
 }
 
 llvm::Value *CGProcedure::addPhiOperands(
