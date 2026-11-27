@@ -1,0 +1,54 @@
+## driver: /home/user/opt/build/tinylang2/tools/driver/tinylang
+
+===== tinylang/example/Gcd.mod (пример из задания)
+Tinylang 0.1
+(exit=0)
+
+=============================== lab/tests/add-int-bool.mod
+lab/tests/add-int-bool.mod:5:10: error: types not compatible for operator +
+  y := 1 + TRUE;
+         ^
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/add-number-and-string.mod
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/duplicate-function-params.mod
+lab/tests/duplicate-function-params.mod:3:16: error: symbol a already declared
+PROCEDURE F(a, a: INTEGER) : INTEGER;
+               ^
+lab/tests/duplicate-function-params.mod:3:11: error: wrong number of parameters
+PROCEDURE F(a, a: INTEGER) : INTEGER;
+          ^
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/if-int-condition.mod
+lab/tests/if-int-condition.mod:6:3: error: expression of IF statement must have type BOOLEAN
+  IF x THEN
+  ^
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/return-10-in-procedure.mod
+lab/tests/return-10-in-procedure.mod:5:3: error: Procedure does not allow RETURN with value
+  RETURN 10;
+  ^
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/return10-type-ok.mod
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/scope-func-and-local.mod
+lab/tests/scope-func-and-local.mod:4:5: error: symbol a already declared
+VAR a: INTEGER;
+    ^
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/scope-shadow.mod
+Tinylang 0.1
+(exit=0)
+=============================== lab/tests/while-int-condition.mod
+lab/tests/while-int-condition.mod:6:3: error: expression of IF statement must have type BOOLEAN
+  WHILE x DO
+  ^
+Tinylang 0.1
+(exit=0)

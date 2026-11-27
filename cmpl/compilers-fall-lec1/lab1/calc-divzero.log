@@ -1,0 +1,32 @@
+## calc "with x: x / 0"
+Division by zero
+Semantic errors occured
+(exit=1)
+
+## calc "with x: x / (2 - 2)"
+Division by zero
+Semantic errors occured
+(exit=1)
+
+## calc "with x: x / (4 - 1 - 3)"
+Division by zero
+Semantic errors occured
+(exit=1)
+
+## calc "with x: (x / 0) + 1"
+Division by zero
+Semantic errors occured
+(exit=1)
+
+## calc "with x: x / 2" (валидный случай)
+(exit=0)
+
+## calc "with a, b: 1 + c" (неопределённая переменная)
+Variable c not declared
+Semantic errors occured
+(exit=1)
+
+## calc "with a, a: 1" (повторное объявление)
+Variable a already declared
+Semantic errors occured
+(exit=1)

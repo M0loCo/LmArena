@@ -1,0 +1,9 @@
+MODULE Return10TypeOk;
+PROCEDURE Two() : INTEGER;
+BEGIN
+  RETURN 10;
+END Two;
+VAR y: INTEGER;
+BEGIN
+  y := Two();
+END Return10TypeOk.

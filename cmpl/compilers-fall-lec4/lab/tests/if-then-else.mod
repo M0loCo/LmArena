@@ -1,0 +1,10 @@
+MODULE IfThenElse;
+PROCEDURE Pick(x: INTEGER) : INTEGER;
+BEGIN
+  IF x > 0 THEN
+    RETURN 1;
+  ELSE
+    RETURN 0;
+  END;
+END Pick;
+END IfThenElse.

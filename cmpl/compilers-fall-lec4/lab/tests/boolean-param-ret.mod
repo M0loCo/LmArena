@@ -1,0 +1,10 @@
+MODULE BoolParamRet;
+PROCEDURE Not(b: BOOLEAN) : BOOLEAN;
+BEGIN
+  RETURN NOT b;
+END Not;
+PROCEDURE IsTrue(dummy: INTEGER) : BOOLEAN;
+BEGIN
+  RETURN dummy = 1;
+END IsTrue;
+END BoolParamRet.
